@@ -1,5 +1,5 @@
 # OpenELIS-OpenCR-HIE-Setup
-
+This integration aims to connect OpenELIS, a laboratory information system, with a FHIR-Based Open Client Registry which will allow users to search for patients within their local OpenELIS system, If the patient isn't found locally, search the client registry then Import patient information from the client registry to OpenELIS. In simpler terms, this lets users find patients within their local system and if not found, search for them in a central database and bring their information back into the local system.
 
 ## How-Tos
 
