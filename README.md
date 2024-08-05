@@ -37,7 +37,12 @@ docker system prune --volumes
 ```
 ## Local setup
 
-Unzip esplugin plugin by cd'ing into `esplugin/string-similarity`
+```
+  cd esplugin/string-similarity
+  ```
+```
+  unzip string-similarity-scoring-0.0.6-es7.9.1.zip
+  ```
 
 Spin up the services
 
