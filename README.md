@@ -37,7 +37,7 @@ docker system prune --volumes
 ```
 ## Local setup
 
-Unzip esplugin plugin by cd'ing into esplugin/
+Unzip esplugin plugin by cd'ing into `esplugin/string-similarity`
 
 Spin up the services
 
