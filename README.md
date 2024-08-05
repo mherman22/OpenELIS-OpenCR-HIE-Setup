@@ -44,7 +44,7 @@ docker system prune --volumes
   unzip string-similarity-scoring-0.0.6-es7.9.1.zip
   ```
 
-Spin up the services
+## Spin up the services
 
 ```
 docker compose -f openelis-opencr-hie-docker-compose.yml up -d
