@@ -37,12 +37,17 @@ docker system prune --volumes
 ```
 ## Local setup
 
-Unzip esplugin plugin
+```
+  cd esplugin/string-similarity
+  ```
+```
+  unzip string-similarity-scoring-0.0.6-es7.9.1.zip
+  ```
 
-Spin up the services
+## Spin up the services
 
 ```
-docker compose -f docker-compose-local.yml up -d
+docker compose -f openelis-opencr-hie-docker-compose.yml up -d
 ```
 ### You should be able to acces the OpenELIS ,OpenHIM , OpenCR and Hapi-Fhir instances  at the following urls
 | Instance  |     URL       | credentials (user : password)|
