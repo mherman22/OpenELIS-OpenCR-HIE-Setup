@@ -64,9 +64,9 @@ installed flag under app to false to load configs for Opencr
 
 ### Restart the Streaming pipeline to work Properly
 After spinning up the Sigdep3 , restart the Streaming pipeline to Stream all Changes to the SHR (Fixed by adding depends-on meta in compose file)
-```
-docker restart streaming-pipeline
-```
+- ```
+    docker restart streaming-pipeline
+    ```
 
 ### Configure OpenHIM URL for client registry module of OpenMRS
 Set the CLIENTREGISTRY_SERVERURL, CLIENTREGISTRY_USERNAME, CLIENTREGISTRY_PASSWORD, CLIENTREGISTRY_IDENTIFIERROOT in the .env file
@@ -102,10 +102,10 @@ Update the inventory.ini file with the host addresses
 Run the command below in the distribution    
 Enter password of the private key when prompted    
 
-```sh
-cd deployment
-ansible-playbook -i inventory.ini deployment.yml
-```
+- ```sh
+    cd deployment
+    ansible-playbook -i inventory.ini deployment.yml
+    ```
 
 Run the following command in the test folder using newman to preload the client registry
 
@@ -114,4 +114,4 @@ Run the following command in the test folder using newman to preload the client 
     ```
 - ```
     newman run postman_collection.json -e postman_environment.json --iteration-data pims_rule_test_dataset.csv --insecure
-```
+   ```
