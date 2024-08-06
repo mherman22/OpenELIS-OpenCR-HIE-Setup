@@ -1,25 +1,29 @@
 # OpenELIS-OpenCR-HIE-Setup
-This integration aims to connect OpenELIS, a laboratory information system, with a FHIR-Based Open Client Registry which will allow users to search for patients within their local OpenELIS system, If the patient isn't found locally, search the client registry then Import patient information from the client registry to OpenELIS. In simpler terms, this lets users find patients within their local system and if not found, search for them in a central database and bring their information back into the local system.
+This integration aims to connect OpenELIS, a laboratory information system, with a FHIR-Based Open Client Registry which will allow users to search for patients within their local OpenELIS system, If the patient isn't found locally, search the client registry then Import patient information from the client registry to OpenELIS. 
+
+In simpler terms, this lets users find patients within their local system and if not found, search for them in a central database and bring their information back into the local system.
 
 ## How-Tos
 
 ### Pre-Requesites 
-1. Git: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
-2. Git Large File Storage: https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage
-3. Docker: https://docs.docker.com/engine/install/
+- Git: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
+- Git Large File Storage: https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage
+- Docker: https://docs.docker.com/engine/install/
 
 ### Startup
 
-```sh
-git clone https://github.com/mherman22/OpenELIS-OpenCR-HIE-Setup
-
-git lfs fetch
-
-git lfs checkout
-
-git lfs pull
-
-```
+- ```
+    git clone https://github.com/mherman22/OpenELIS-OpenCR-HIE-Setup
+    ```
+- ```
+    git lfs fetch
+    ```
+-  ```
+    git lfs checkout
+    ```
+- ```
+    git lfs pull
+    ```
 In the file found at "./configs/opencr/config.json" change the
 installed flag under app to false to load configs for Opencr  
 ```
@@ -31,24 +35,26 @@ installed flag under app to false to load configs for Opencr
 
 
 ### Resetting and Clearing OpenCR 
-```sh
-docker stop opencr opencr-fhir es
-docker system prune --volumes
-```
+- ```
+    docker stop opencr opencr-fhir es
+  ```
+- ```
+    docker system prune --volumes
+  ```
 ## Local setup
 
-```
+- ```
   cd esplugin/string-similarity
   ```
-```
+- ```
   unzip string-similarity-scoring-0.0.6-es7.9.1.zip
   ```
 
 ## Spin up the services
 
-```
-docker compose -f openelis-opencr-hie-docker-compose.yml up -d
-```
+- ```
+    docker compose -f openelis-opencr-hie-docker-compose.yml up -d
+    ```
 ### You should be able to acces the OpenELIS ,OpenHIM , OpenCR and Hapi-Fhir instances  at the following urls
 | Instance  |     URL       | credentials (user : password)|
 |---------- |:-------------:|------:                       |
@@ -103,7 +109,9 @@ ansible-playbook -i inventory.ini deployment.yml
 
 Run the following command in the test folder using newman to preload the client registry
 
-```
-npm install -g newman
-newman run postman_collection.json -e postman_environment.json --iteration-data pims_rule_test_dataset.csv --insecure
+- ```
+    npm install -g newman
+    ```
+- ```
+    newman run postman_collection.json -e postman_environment.json --iteration-data pims_rule_test_dataset.csv --insecure
 ```
