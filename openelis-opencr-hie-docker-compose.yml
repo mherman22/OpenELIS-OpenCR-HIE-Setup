@@ -202,7 +202,7 @@ services:
             
   oe.openelis.org:
     container_name: openelisglobal-webapp 
-    image: itechuw/openelis-global-2-dev:oebackend
+    image: itechuw/openelis-global-2-dev:develop
     depends_on:
         - database
         - certs
@@ -257,7 +257,7 @@ services:
           - source: hapi_application.yaml 
 
   frontend.openelis.org:
-    image: itechuw/openelis-global-2-frontend-dev:oefrontend
+    image: itechuw/openelis-global-2-frontend-dev:develop
     container_name: openelisglobal-front-end
     networks:
         - hie
