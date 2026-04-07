@@ -27,7 +27,7 @@ jobs:
       - name: Start core HIE services
         run: |
           docker compose -f openelis-opencr-hie-docker-compose.yml up -d \
-            mongo openhim-core openhim-console openhim-config \
+            mongo openhim-core openhim-console \
             opencr-fhir es opencr \
             fhir.openelis.org
 

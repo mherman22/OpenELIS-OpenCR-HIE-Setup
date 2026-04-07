@@ -97,7 +97,7 @@ services:
   opencr:
     container_name: opencr
     hostname: opencr
-    image: ghcr.io/mherman22/client-registry:ui-rewrite
+    image: ghcr.io/mherman22/client-registry:improved-opencr-fork
     restart: unless-stopped
     environment:
       - NODE_ENV=docker
