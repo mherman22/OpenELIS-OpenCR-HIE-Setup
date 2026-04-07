@@ -97,7 +97,7 @@ services:
   opencr:
     container_name: opencr
     hostname: opencr
-    image: intrahealth/opencr:latest
+    image: ghcr.io/mherman22/client-registry:ui-rewrite
     restart: unless-stopped
     environment:
       - NODE_ENV=docker
