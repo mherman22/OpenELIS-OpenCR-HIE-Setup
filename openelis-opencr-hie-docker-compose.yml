@@ -85,9 +85,41 @@ services:
   # Loads Default OpenHIM Config
   openhim-config:
     container_name: openhim-config
-    image: ghcr.io/i-tech-uw/openhim-config:v0.0.0
+    image: node:erbium-alpine
     volumes:
       - ./configs/openhim/test-openhim-config.json:/app/test-openhim-config.json
+    environment:
+      - OPENHIM_API_URL=https://openhim-core:8080
+      - OPENHIM_API_USERNAME=root@openhim.org
+      - OPENHIM_API_PASSWORD=openhim-password
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
+    command: >
+      sh -c "
+        echo 'Waiting for OpenHIM...' &&
+        sleep 30 &&
+        node -e \"
+          const https = require('https');
+          const fs = require('fs');
+          const config = JSON.parse(fs.readFileSync('/app/test-openhim-config.json'));
+          const auth = Buffer.from('root@openhim.org:openhim-password').toString('base64');
+          const opts = {hostname:'openhim-core',port:8080,method:'POST',rejectUnauthorized:false,
+            headers:{'Content-Type':'application/json','Authorization':'Basic '+auth}};
+          ['Channels','Clients','ContactGroups'].forEach(key => {
+            if(!config[key]) return;
+            config[key].forEach(item => {
+              const path = key === 'Channels' ? '/channels' : key === 'Clients' ? '/clients' : '/contactGroups';
+              const req = https.request({...opts, path}, res => {
+                let body=''; res.on('data',d=>body+=d);
+                res.on('end',()=>console.log(key,res.statusCode,body.substring(0,100)));
+              });
+              req.on('error',e=>console.error(key,'error:',e.message));
+              req.write(JSON.stringify(item)); req.end();
+            });
+          });
+        \"
+      "
+    depends_on:
+      - openhim-core
     networks:
       - hie
 
