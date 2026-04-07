@@ -24,7 +24,7 @@ This is a reference implementation for laboratory integration in an OpenHIE-base
 │   OpenELIS       │     │   OpenHIM     │     │   OpenCR     │
 │  (Lab System)    │────▶│ (Mediator)    │────▶│ (Client      │
 │                  │     │              │     │  Registry)   │
-│  Port: 443       │     │  Port: 5001   │     │  Port: 3000   │
+│  Port: 443       │     │  Port: 5001   │     │  Port: 3001   │
 └──────────────────┘     └──────┬───────┘     └──────┬───────┘
                                 │                     │
                          ┌──────▼───────┐     ┌──────▼───────┐
@@ -44,7 +44,7 @@ This is a reference implementation for laboratory integration in an OpenHIE-base
 | OpenELIS Frontend | `itechuw/openelis-global-2-frontend-dev:develop` | 443 | Lab system web UI |
 | OpenELIS Backend | `itechuw/openelis-global-2-dev:develop` | 8443 | Lab system API |
 | OpenELIS Database | `postgres:14.4` | 5432 | Lab data |
-| OpenCR | `ghcr.io/mherman22/client-registry:ui-rewrite` | 3000 | Patient matching and golden records |
+| OpenCR | `ghcr.io/mherman22/client-registry:ui-rewrite` | 3001 | Patient matching and golden records |
 | OpenCR HAPI FHIR | `hapiproject/hapi:v5.5.1` | 8087 | Patient storage for OpenCR |
 | Elasticsearch | `intrahealth/elasticsearch:latest` | 9200 | Patient matching index |
 | OpenHIM Core | `jembi/openhim-core:v7.1.0` | 5001 | Interoperability layer |
@@ -60,7 +60,7 @@ This is a reference implementation for laboratory integration in an OpenHIE-base
 - **Docker** (v20+) with Docker Compose v2: [Install Docker](https://docs.docker.com/engine/install/)
 - **Git** with Git LFS: [Install Git LFS](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage)
 - **8 GB RAM** minimum (16 GB recommended)
-- **Ports 80, 443, 3000, 5001, 9000** available
+- **Ports 80, 443, 3001, 5001, 9000** available
 
 ---
 
@@ -88,7 +88,7 @@ docker compose -f openelis-opencr-hie-docker-compose.yml ps
 |---------|-----|-------------|
 | OpenELIS | https://localhost/login | `admin` / `adminADMIN!` |
 | OpenHIM Console | http://localhost:9000 | `root@openhim.org` / `openhim` |
-| OpenCR (CRUX UI) | https://localhost:3000/crux/#/login | `root@intrahealth.org` / `intrahealth` |
+| OpenCR (CRUX UI) | https://localhost:3001/crux/#/login | `root@intrahealth.org` / `intrahealth` |
 | External FHIR API | https://localhost:8444/fhir | — |
 
 > **Note:** After first startup, restart the streaming pipeline to ensure data flows correctly:
