@@ -1,117 +1,339 @@
-# OpenELIS-OpenCR-HIE-Setup
-This integration aims to connect OpenELIS, a laboratory information system, with a FHIR-Based Open Client Registry which will allow users to search for patients within their local OpenELIS system, If the patient isn't found locally, search the client registry then Import patient information from the client registry to OpenELIS. 
+# OpenELIS + OpenCR Health Information Exchange
 
-In simpler terms, this lets users find patients within their local system and if not found, search for them in a central database and bring their information back into the local system.
+A Docker-based Health Information Exchange (HIE) that integrates [OpenELIS Global](https://github.com/I-TECH-UW/OpenELIS-Global-2) (Laboratory Information System), [OpenCR](https://github.com/mherman22/client-registry) (Client Registry / Master Patient Index), and [OpenHIM](http://openhim.org/) (Interoperability Layer).
 
-## How-Tos
+## What does this do?
 
-### Pre-Requesites 
-- Git: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
-- Git Large File Storage: https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage
-- Docker: https://docs.docker.com/engine/install/
+This setup enables **patient identity lookup across systems**:
 
-### Startup
+1. A lab technician in OpenELIS searches for a patient
+2. If the patient isn't found locally, OpenELIS queries the Client Registry (OpenCR) via OpenHIM
+3. The patient's demographics and identifiers are imported from the central registry into OpenELIS
+4. Lab results are linked to the correct patient across all facilities
 
-- ```
-    git clone https://github.com/mherman22/OpenELIS-OpenCR-HIE-Setup
-    ```
-- ```
-    git lfs fetch
-    ```
--  ```
-    git lfs checkout
-    ```
-- ```
-    git lfs pull
-    ```
-In the file found at "./configs/opencr/config.json" change the
-installed flag under app to false to load configs for Opencr  
+This is a reference implementation for laboratory integration in an OpenHIE-based architecture.
+
+---
+
+## Architecture
+
 ```
-"app": {
-    "port": 3000,
-    "installed": false
-}
+┌──────────────────┐     ┌──────────────┐     ┌──────────────┐
+│   OpenELIS       │     │   OpenHIM     │     │   OpenCR     │
+│  (Lab System)    │────▶│ (Mediator)    │────▶│ (Client      │
+│                  │     │              │     │  Registry)   │
+│  Port: 443       │     │  Port: 5001   │     │  Port: 3000   │
+└──────────────────┘     └──────┬───────┘     └──────┬───────┘
+                                │                     │
+                         ┌──────▼───────┐     ┌──────▼───────┐
+                         │   MongoDB    │     │  HAPI FHIR   │
+                         │  (OpenHIM)   │     │  (patients)  │
+                         └──────────────┘     └──────────────┘
+                                              ┌──────────────┐
+                                              │Elasticsearch │
+                                              │  (matching)  │
+                                              └──────────────┘
 ```
 
+### Services
 
-### Resetting and Clearing OpenCR 
-- ```
-    docker stop opencr opencr-fhir es
-  ```
-- ```
-    docker system prune --volumes
-  ```
-## Local setup
+| Service | Image | Port | Purpose |
+|---------|-------|------|---------|
+| OpenELIS Frontend | `itechuw/openelis-global-2-frontend-dev:develop` | 443 | Lab system web UI |
+| OpenELIS Backend | `itechuw/openelis-global-2-dev:develop` | 8443 | Lab system API |
+| OpenELIS Database | `postgres:14.4` | 5432 | Lab data |
+| OpenCR | `ghcr.io/mherman22/client-registry:ui-rewrite` | 3000 | Patient matching and golden records |
+| OpenCR HAPI FHIR | `hapiproject/hapi:v5.5.1` | 8087 | Patient storage for OpenCR |
+| Elasticsearch | `intrahealth/elasticsearch:latest` | 9200 | Patient matching index |
+| OpenHIM Core | `jembi/openhim-core:v7.1.0` | 5001 | Interoperability layer |
+| OpenHIM Console | `jembi/openhim-console:v1.15.0` | 9000 | OpenHIM admin UI |
+| External FHIR API | `hapiproject/hapi:v6.6.0-tomcat` | 8444 | Shared Health Record |
+| MongoDB | `mongo:3.4` | — | OpenHIM data store |
+| Nginx Proxy | `nginx:1.15-alpine` | 80/443 | Reverse proxy for OpenELIS |
 
-- ```
-  cd esplugin/string-similarity
-  ```
-- ```
-  unzip string-similarity-scoring-0.0.6-es7.9.1.zip
-  ```
+---
 
-## Spin up the services
+## Prerequisites
 
-- ```
-    docker compose -f openelis-opencr-hie-docker-compose.yml up -d
-    ```
-### You should be able to acces the OpenELIS ,OpenHIM , OpenCR and Hapi-Fhir instances  at the following urls
-| Instance  |     URL       | credentials (user : password)|
-|---------- |:-------------:|------:                       |
-| OpenHIM   | http://localhost:9000  |  root@openhim.org : openhim |
-| OpenCR    | http://localhost:3000/crux  |  root@intrahealth.org  : intrahealth|
-| OpenELIS | https://localhost/login |    admin : adminADMIN!| 
+- **Docker** (v20+) with Docker Compose v2: [Install Docker](https://docs.docker.com/engine/install/)
+- **Git** with Git LFS: [Install Git LFS](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage)
+- **8 GB RAM** minimum (16 GB recommended)
+- **Ports 80, 443, 3000, 5001, 9000** available
 
-### Restart the Streaming pipeline to work Properly
-After spinning up the Sigdep3 , restart the Streaming pipeline to Stream all Changes to the SHR (Fixed by adding depends-on meta in compose file)
-- ```
-    docker restart streaming-pipeline
-    ```
+---
 
-### Configure OpenHIM URL for client registry module of OpenMRS
-Set the CLIENTREGISTRY_SERVERURL, CLIENTREGISTRY_USERNAME, CLIENTREGISTRY_PASSWORD, CLIENTREGISTRY_IDENTIFIERROOT in the .env file
-Note that the Openhim should be up before starting the OpenMRS service. Currently this is ensured on local setup with the depends-on meta in the compose file
+## Quick Start
 
+```bash
+# 1. Clone with LFS support
+git clone https://github.com/mherman22/OpenELIS-OpenCR-HIE-Setup.git
+cd OpenELIS-OpenCR-HIE-Setup
+git lfs pull
 
-### Possible challenges
-Ensure the .db folder at the root has permissions to allow docker to write files
+# 2. Set OpenCR to fresh install mode
+# Edit configs/opencr/config.json — set "installed": false under "app"
 
-###
-Running on gitpod
-Change the env var of es to have only 
-`      - xpack.security.enabled=false
-        - discovery.type=single-node
-`
-and change the ulimit as 
-`
-ulimits:
-      nofile:
-        soft: 65536
-        hard: 65536
-`    
-Follow the blog here: https://www.gitpod.io/blog/local-app to enable localhost on your machine
+# 3. Start all services
+docker compose -f openelis-opencr-hie-docker-compose.yml up -d
 
-Incase spark image is failing. Consider upgrading the docker engine.
-See [here](https://docs.docker.com/engine/install/ubuntu/#upgrade-docker-engine)
+# 4. Wait for services to be ready (~3-5 minutes)
+docker compose -f openelis-opencr-hie-docker-compose.yml ps
+```
 
-### Deploying with ansible to remote server
-Install ansible on the host machine following steps here https://docs.ansible.com/ansible/latest/installation_guide/installation_distros.html    
-Ensure the public key is already added to the remote server    
-Update the path to your private key on the variable ansible_ssh_private_key_file    
-Update the inventory.ini file with the host addresses    
-Run the command below in the distribution    
-Enter password of the private key when prompted    
+### Access the services
 
-- ```sh
-    cd deployment
-    ansible-playbook -i inventory.ini deployment.yml
-    ```
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| OpenELIS | https://localhost/login | `admin` / `adminADMIN!` |
+| OpenHIM Console | http://localhost:9000 | `root@openhim.org` / `openhim` |
+| OpenCR (CRUX UI) | https://localhost:3000/crux/#/login | `root@intrahealth.org` / `intrahealth` |
+| External FHIR API | https://localhost:8444/fhir | — |
 
-Run the following command in the test folder using newman to preload the client registry
+> **Note:** After first startup, restart the streaming pipeline to ensure data flows correctly:
+> ```bash
+> docker restart streaming-pipeline
+> ```
 
-- ```
-    npm install -g newman
-    ```
-- ```
-    newman run postman_collection.json -e postman_environment.json --iteration-data pims_rule_test_dataset.csv --insecure
-   ```
+---
+
+## Configuration
+
+### Environment Variables (`.env`)
+
+```env
+TAG=nightly
+HOST_URL=localhost
+COMPOSE_PROJECT_NAME=sigdep3
+
+# Client Registry connection (used by OpenMRS/SigDep3)
+CLIENTREGISTRY_SERVERURL=http://openhim-core:5001/CR/fhir
+CLIENTREGISTRY_USERNAME=sigdep3
+CLIENTREGISTRY_PASSWORD=sigdep3
+CLIENTREGISTRY_IDENTIFIERROOT=http://clientregistry.org/openmrs
+```
+
+For remote deployment, set `HOST_URL` to your server's domain.
+
+### Configuration Files
+
+```
+configs/
+├── opencr/
+│   ├── config.json              # OpenCR main config (FHIR, ES, mediator, clients)
+│   ├── decisionRules.json       # Patient matching rules
+│   ├── mediator.json            # OpenHIM mediator registration
+│   └── PatientRelationship.json # Elasticsearch field mapping
+├── openelis/                    # OpenELIS properties and SSL certs
+├── openhim/                     # OpenHIM channel/client import
+├── openhim-console/             # OpenHIM Console config
+├── hapi/                        # HAPI FHIR application.yaml
+├── traefik/                     # Traefik reverse proxy (for remote deploy)
+├── nginx/                       # Nginx proxy for OpenELIS
+└── streaming-pipeline/          # FHIR data pipeline config
+```
+
+### Key Configuration Notes
+
+**OpenCR:** Set `app.installed: false` on first run to trigger initial setup. After first run, it auto-sets to `true`.
+
+**OpenHIM:** The config importer (`openhim-config`) auto-loads channels and clients on startup. If you need to re-import, remove the config container and restart.
+
+**OpenELIS:** SSL certificates are generated by the `certs` init container. The database is initialized from the `init-scripts/` directory.
+
+---
+
+## Development
+
+### Starting specific services
+
+```bash
+# Start only OpenCR stack (for testing client registry)
+docker compose -f openelis-opencr-hie-docker-compose.yml up -d opencr opencr-fhir es
+
+# Start only OpenELIS stack
+docker compose -f openelis-opencr-hie-docker-compose.yml up -d oe.openeliss.org database certs proxy
+
+# Start the full HIE
+docker compose -f openelis-opencr-hie-docker-compose.yml up -d
+```
+
+### Viewing logs
+
+```bash
+# All services
+docker compose -f openelis-opencr-hie-docker-compose.yml logs -f
+
+# Specific service
+docker compose -f openelis-opencr-hie-docker-compose.yml logs -f opencr
+
+# Check service health
+docker compose -f openelis-opencr-hie-docker-compose.yml ps
+```
+
+### Resetting OpenCR
+
+```bash
+docker stop opencr opencr-fhir es
+docker rm opencr opencr-fhir es
+docker volume rm sigdep3_opencr-data sigdep3_es-data sigdep3_opencr-fhir-data
+# Set "installed": false in configs/opencr/config.json
+docker compose -f openelis-opencr-hie-docker-compose.yml up -d opencr opencr-fhir es
+```
+
+### Resetting everything
+
+```bash
+docker compose -f openelis-opencr-hie-docker-compose.yml down -v
+# Set "installed": false in configs/opencr/config.json
+docker compose -f openelis-opencr-hie-docker-compose.yml up -d
+```
+
+---
+
+## Testing
+
+### Postman Tests
+
+The `.postman/` directory contains test collections for validating the integration:
+
+```bash
+# Install Newman (Postman CLI)
+npm install -g newman
+
+# Run the general test suite
+newman run .postman/1-general-tests.json --insecure
+```
+
+### Preloading Test Data
+
+```bash
+cd test
+newman run postman_collection.json \
+  -e postman_environment.json \
+  --iteration-data pims_rule_test_dataset.csv \
+  --insecure
+```
+
+---
+
+## Remote Deployment (Ansible)
+
+For deploying to a remote server:
+
+```bash
+# 1. Install Ansible
+# https://docs.ansible.com/ansible/latest/installation_guide/installation_distros.html
+
+# 2. Configure inventory
+# Edit deployment/inventory.ini with your server addresses
+
+# 3. Deploy
+cd deployment
+ansible-playbook -i inventory.ini deployment.yml
+```
+
+Ensure your SSH public key is on the remote server and update `ansible_ssh_private_key_file` in the inventory.
+
+### SSL Certificates (Remote)
+
+For production deployments with a domain:
+
+```bash
+# Generate Let's Encrypt certificates
+docker compose -f certbot-compose.yml up
+```
+
+---
+
+## Elasticsearch Plugin
+
+OpenCR uses a custom Elasticsearch string-similarity plugin for probabilistic matching (Jaro-Winkler, Damerau-Levenshtein). The plugin is pre-installed in the `intrahealth/elasticsearch` image.
+
+For local builds:
+
+```bash
+cd esplugin/string-similarity
+unzip string-similarity-scoring-0.0.6-es7.9.1.zip
+```
+
+---
+
+## Troubleshooting
+
+### OpenELIS shows connection errors to Client Registry
+Check that OpenHIM is running and the client registry channel is configured:
+```bash
+docker logs openhim-core 2>&1 | tail -20
+docker logs opencr 2>&1 | tail -20
+```
+
+### OpenCR shows empty patient list
+Verify Elasticsearch is healthy:
+```bash
+curl http://localhost:9200/_cluster/health?pretty
+```
+
+### Streaming pipeline fails
+The pipeline depends on OpenMRS (SigDep3) being fully started. Restart it:
+```bash
+docker restart streaming-pipeline
+```
+
+### Port conflicts
+If ports 80/443 are in use, stop conflicting services or modify port mappings in the compose file.
+
+### Permissions error on `.db` folder
+```bash
+sudo chmod -R 777 .db
+```
+
+---
+
+## CI/CD
+
+GitHub Actions runs on every push and PR to `main`:
+
+1. **Pulls all container images**
+2. **Starts the core HIE stack** (OpenMRS, OpenHIM, OpenCR, Elasticsearch)
+3. **Waits for services to be healthy**
+4. **Runs Postman integration tests** via Newman
+5. **Reports results** and tears down
+
+See [`.github/workflows/main.yml`](.github/workflows/main.yml).
+
+---
+
+## Project Structure
+
+```
+OpenELIS-OpenCR-HIE-Setup/
+├── openelis-opencr-hie-docker-compose.yml  # Main compose file
+├── certbot-compose.yml                      # SSL cert generation
+├── .env                                     # Environment variables
+├── configs/                                 # Service configurations
+│   ├── opencr/                              # OpenCR config, rules, mappings
+│   ├── openelis/                            # OpenELIS properties
+│   ├── openhim/                             # OpenHIM channels/clients
+│   └── ...                                  # Other service configs
+├── deployment/                              # Ansible playbooks
+├── esplugin/                                # ES string-similarity plugin
+├── init-scripts/                            # Database init SQL
+├── .postman/                                # Integration test collections
+├── test/                                    # Test data and scripts
+└── .github/workflows/                       # CI configuration
+```
+
+---
+
+## Related Projects
+
+- [OpenCR (Client Registry)](https://github.com/mherman22/client-registry) — Forked with bug fixes and UI modernization
+- [OpenELIS Global](https://github.com/I-TECH-UW/OpenELIS-Global-2) — Laboratory Information System
+- [OpenHIM](http://openhim.org/) — Health Information Mediator
+- [SEDISH Haiti HIE](https://github.com/charess-org/sedish) — Haiti HIE deployment using OpenCR
+
+---
+
+## License
+
+[Apache License 2.0](LICENSE)
