@@ -1,5 +1,7 @@
 # OpenELIS + OpenCR Health Information Exchange
 
+[![CI](https://github.com/mherman22/OpenELIS-OpenCR-HIE-Setup/actions/workflows/main.yml/badge.svg)](https://github.com/mherman22/OpenELIS-OpenCR-HIE-Setup/actions/workflows/main.yml)
+
 A Docker-based Health Information Exchange (HIE) that integrates [OpenELIS Global](https://github.com/I-TECH-UW/OpenELIS-Global-2) (Laboratory Information System), [OpenCR](https://github.com/mherman22/client-registry) (Client Registry / Master Patient Index), and [OpenHIM](http://openhim.org/) (Interoperability Layer).
 
 ## What does this do?
